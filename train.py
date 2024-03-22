@@ -91,7 +91,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--pretrained_model_name_or_path",
         type=str,
-        default="stabilityai/stable-diffusion-2-1-base",
+        default="OFA-Sys/small-stable-diffusion-v0",
         help="Path to pretrained model or model identifier from huggingface.co/models.",
     )
     parser.add_argument(
@@ -478,12 +478,14 @@ class DreamBoothDataset(Dataset):
 
         self.image_transforms = transforms.Compose(
             [
+                transforms.Resize((size, size)),
                 transforms.ToTensor(),
                 transforms.Normalize([0.5], [0.5]),
             ]
         )
         self.mask_transforms = transforms.Compose(
             [
+                transforms.Resize((size, size)),
                 transforms.ToTensor(),
             ]
         )
@@ -664,14 +666,14 @@ class SpatialDreambooth:
         # If passed along, set the training seed now.
         if self.args.seed is not None:
             set_seed(self.args.seed)
-
+        print("Here")
         # Generate class images if prior preservation is enabled.
         if self.args.with_prior_preservation:
             class_images_dir = Path(self.args.class_data_dir)
             if not class_images_dir.exists():
                 class_images_dir.mkdir(parents=True)
             cur_class_images = len(list(class_images_dir.iterdir()))
-
+            print("Here")
             if cur_class_images < self.args.num_class_images:
                 torch_dtype = (
                     torch.float16
@@ -684,11 +686,13 @@ class SpatialDreambooth:
                     torch_dtype = torch.float16
                 elif self.args.prior_generation_precision == "bf16":
                     torch_dtype = torch.bfloat16
+                print("Here")
                 pipeline = DiffusionPipeline.from_pretrained(
                     self.args.pretrained_model_name_or_path,
                     torch_dtype=torch_dtype,
                     safety_checker=None,
                     revision=self.args.revision,
+                    cache_dir="./"
                 )
                 pipeline.set_progress_bar_config(disable=True)
 
@@ -721,7 +725,7 @@ class SpatialDreambooth:
                 del pipeline
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
-
+        print("Here skip")
         # Handle the repository creation
         if self.accelerator.is_main_process:
             os.makedirs(self.args.output_dir, exist_ok=True)
